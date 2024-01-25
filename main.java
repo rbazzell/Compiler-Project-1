@@ -4,4 +4,4 @@ class Main {
     }
 }
 
-//No debug make me :( 
+//Yes debug make me :)
