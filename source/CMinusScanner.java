@@ -166,8 +166,7 @@ public class CMinusScanner implements Scanner {
                     break;
                 case IN_COMMENT:
                     if (EOF) {
-                        //TODO - might need to be an error token if expecting end of comment
-                        returnToken = new Token(Token.TokenType.EOF);
+                        returnToken = new Token(Token.TokenType.ERR);
                         currState = DFAState.DONE;
                     } else if (currChar == '*') {
                         currState = DFAState.IN_COMMENT_OUT;
@@ -175,8 +174,7 @@ public class CMinusScanner implements Scanner {
                     break;
                 case IN_COMMENT_OUT:
                     if (EOF) {
-                        //TODO - might need to be an error token if expecting end of comment
-                        returnToken = new Token(Token.TokenType.EOF);
+                        returnToken = new Token(Token.TokenType.ERR);
                         currState = DFAState.DONE;
                     } else if (currChar == '/') {
                         currState = DFAState.START;
