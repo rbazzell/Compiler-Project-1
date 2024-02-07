@@ -10,7 +10,13 @@ public class CMinusScanner implements Scanner {
         
         IN_ID,
         IN_NUM,
+        IN_DIV,
         IN_COMMENT,
+        IN_COMMENT_OUT,
+        IN_LT,
+        IN_GT,
+        IN_EQ,
+        IN_EXCL,
         
         DONE }
     
@@ -41,11 +47,11 @@ public class CMinusScanner implements Scanner {
         char currChar;
         DFAState currState = DFAState.START;
         //DFA switch statement
-        while (currState != DFAState.DONE) { 
+        while (currState != DFAState.DONE) {
+            currChar = (char) getNextChar(inFile); 
+            EOF = (currChar == (char) -1);
             switch(currState) {
                 case START:
-                    EOF = viewNextChar(inFile) == -1;
-                    currChar = (char) getNextChar(inFile);
                     if (isSpace(currChar)) {
                         continue;
                     } else if (isDigit(currChar)) {
@@ -69,43 +75,19 @@ public class CMinusScanner implements Scanner {
                                 currState = DFAState.DONE;
                                 break;
                             case '/':
-                                if (viewNextChar(inFile) == '*') {
-                                    currChar = (char) getNextChar(inFile);
-                                    currState = DFAState.IN_COMMENT;
-                                } else {
-                                    returnToken = new Token(Token.TokenType.DIV);
-                                    currState = DFAState.DONE;
-                                }
+                                currState = DFAState.IN_DIV;
                                 break;
                             case '<':
-                                if (viewNextChar(inFile) == '=') {
-                                    currChar = (char) getNextChar(inFile);
-                                    returnToken = new Token(Token.TokenType.LTE);
-                                    currState = DFAState.DONE;
-                                } else {
-                                    returnToken = new Token(Token.TokenType.LT);
-                                    currState = DFAState.DONE;
-                                }
+                                currState = DFAState.IN_LT;
                                 break;
                             case '>':
-                                if (viewNextChar(inFile) == '=') {
-                                    currChar = (char) getNextChar(inFile);
-                                    returnToken = new Token(Token.TokenType.GTE);
-                                    currState = DFAState.DONE;
-                                } else {
-                                        returnToken = new Token(Token.TokenType.GT);
-                                    currState = DFAState.DONE;
-                                }
+                                currState = DFAState.IN_GT;
                                 break;
                             case '=':
-                                if (viewNextChar(inFile) == '=') {
-                                    currChar = (char) getNextChar(inFile);
-                                    returnToken = new Token(Token.TokenType.EQ);
-                                    currState = DFAState.DONE;
-                                } else {
-                                    returnToken = new Token(Token.TokenType.ASSIGN);
-                                    currState = DFAState.DONE;
-                                }
+                                currState = DFAState.IN_EQ;
+                                break;
+                            case '!':
+                                currState = DFAState.IN_EXCL;
                                 break;
                             case '(':
                                 returnToken = new Token(Token.TokenType.L_PAREN);
@@ -128,7 +110,7 @@ public class CMinusScanner implements Scanner {
                                 currState = DFAState.DONE;
                                 break;
                             case '}':
-                                returnToken = new Token(Token.TokenType.L_CURLY);
+                                returnToken = new Token(Token.TokenType.R_CURLY);
                                 currState = DFAState.DONE;
                                 break;
                             case ';':
@@ -139,63 +121,107 @@ public class CMinusScanner implements Scanner {
                                 returnToken = new Token(Token.TokenType.COMMA);
                                 currState = DFAState.DONE;
                                 break;
-                            case '!':
-                                if (viewNextChar(inFile) == '=') {
-                                    currChar = (char) getNextChar(inFile);
-                                    returnToken = new Token(Token.TokenType.NEQ);
-                                    currState = DFAState.DONE;
-                                } else {
-                                    returnToken = new Token(Token.TokenType.ERR);
-                                    currState = DFAState.DONE;
-                                }
-                                break;
                             default:
                                 returnToken = new Token(Token.TokenType.ERR);
                                 currState = DFAState.DONE;                                
                                 break;
-                            }
-
-                        } else {
-                            returnToken = new Token(Token.TokenType.EOF);
-                            currState = DFAState.DONE;
                         }
+                    } else {
+                        returnToken = new Token(Token.TokenType.EOF);
+                        currState = DFAState.DONE;
+                    }
                     break;
                 case IN_ID:
-                    currChar = (char) viewNextChar(inFile);
-                    if (isSpace(currChar) || isPunctuation(currChar)) {
+                    if (isSpace(currChar) || isPunctuation(currChar) || EOF) {
                         returnToken = new Token(Token.TokenType.ID, currData);
                         currState = DFAState.DONE;
+                        unGetNextChar(inFile);
                     } else if (!isLetter(currChar)) {
-                        returnToken = new Token(Token.TokenType.ERR);
+                        returnToken = new Token(Token.TokenType.ERR, currData + currChar);
                         currState = DFAState.DONE;
                     } else {
-                        currChar = (char) getNextChar(inFile);
                         currData += currChar;
                     }
                     break;
                 case IN_NUM:
-                    currChar = (char) viewNextChar(inFile);
-                    if (isSpace(currChar) || isPunctuation(currChar)) {
-                        returnToken = new Token(Token.TokenType.ID, currData);
+                    if (isSpace(currChar) || isPunctuation(currChar) || EOF) {
+                        returnToken = new Token(Token.TokenType.NUM, currData);
                         currState = DFAState.DONE;
+                        unGetNextChar(inFile);
                     } else if (!isDigit(currChar)) {
-                        returnToken = new Token(Token.TokenType.ERR);
+                        returnToken = new Token(Token.TokenType.ERR, currData + currChar);
                         currState = DFAState.DONE;
                     } else {
-                        currChar = (char) getNextChar(inFile);
                         currData += currChar;
                     }
                     break;
+                case IN_DIV:
+                    if (currChar == '*') {
+                        currState = DFAState.IN_COMMENT;
+                    } else {
+                        returnToken = new Token(Token.TokenType.DIV);
+                        currState = DFAState.DONE;
+                        unGetNextChar(inFile);
+                    }
+                    break;
                 case IN_COMMENT:
-                    if (viewNextChar(inFile) == -1) {
+                    if (EOF) {
+                        //TODO - might need to be an error token if expecting end of comment
                         returnToken = new Token(Token.TokenType.EOF);
                         currState = DFAState.DONE;
+                    } else if (currChar == '*') {
+                        currState = DFAState.IN_COMMENT_OUT;
                     }
-                    currChar = (char) getNextChar(inFile);
-                    char nextChar = (char) viewNextChar(inFile);
-                    if ((currChar == '*') && (nextChar == '/')) {
-                        currChar = (char) getNextChar(inFile);
+                    break;
+                case IN_COMMENT_OUT:
+                    if (EOF) {
+                        //TODO - might need to be an error token if expecting end of comment
+                        returnToken = new Token(Token.TokenType.EOF);
+                        currState = DFAState.DONE;
+                    } else if (currChar == '/') {
                         currState = DFAState.START;
+                    } else if (currChar != '*') {
+                        currState = DFAState.IN_COMMENT;
+                    } 
+                    break;
+                case IN_LT:
+                    if (currChar == '=') {
+                        returnToken = new Token(Token.TokenType.LTE);
+                        currState = DFAState.DONE;
+                    } else {
+                        unGetNextChar(inFile);
+                        returnToken = new Token(Token.TokenType.LT);
+                        currState = DFAState.DONE;
+                    }
+                    break;
+                case IN_GT:
+                    if (currChar == '=') {
+                        returnToken = new Token(Token.TokenType.GTE);
+                        currState = DFAState.DONE;
+                    } else {
+                        returnToken = new Token(Token.TokenType.GT);
+                        currState = DFAState.DONE;
+                        unGetNextChar(inFile);
+                    }
+                    break;
+                case IN_EQ:
+                    if (currChar == '=') {
+                        returnToken = new Token(Token.TokenType.EQ);
+                        currState = DFAState.DONE;
+                    } else {
+                        unGetNextChar(inFile);
+                        returnToken = new Token(Token.TokenType.ASSIGN);
+                        currState = DFAState.DONE;
+                    }
+                    break;
+                case IN_EXCL:
+                    if (currChar == '=') {
+                        returnToken = new Token(Token.TokenType.NEQ);
+                        currState = DFAState.DONE;
+                    } else {
+                        returnToken = new Token(Token.TokenType.ERR);
+                        currState = DFAState.DONE;
+                        unGetNextChar(inFile);
                     }
                     break;
                 case DONE:
@@ -249,15 +275,12 @@ public class CMinusScanner implements Scanner {
     }
 
     private static int getNextChar(BufferedReader inFile) throws IOException {
+        inFile.mark(1);
         return inFile.read();
     }
 
-    private static int viewNextChar(BufferedReader inFile) throws IOException{
-        int returnChar;
-        inFile.mark(1);
-        returnChar = inFile.read();
+    private static void unGetNextChar(BufferedReader inFile) throws IOException {
         inFile.reset();
-        return returnChar;
     }
 
     
