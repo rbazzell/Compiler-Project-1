@@ -270,8 +270,9 @@ public class CMinusScanner implements Scanner {
     }
 
     private static boolean isPunctuation(char c) {
-        return c == ';' || c == ',' || c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || c == '}' ||
-            c == '+' || c == '-' || c == '/' || c == '*' || c == '=' || c == '!' || c == '>' || c == '<'; 
+        return c == ';' || c == ',' || c == '(' || c == ')' || c == '[' || c == ']' || c == '{' 
+            || c == '}' || c == '+' || c == '-' || c == '/' || c == '*' || c == '=' || c == '!' 
+            || c == '>' || c == '<'; 
     }
 
     private static int getNextChar(BufferedReader inFile) throws IOException {
@@ -282,6 +283,4 @@ public class CMinusScanner implements Scanner {
     private static void unGetNextChar(BufferedReader inFile) throws IOException {
         inFile.reset();
     }
-
-    
 }

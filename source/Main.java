@@ -9,7 +9,4 @@ class Main {
             System.out.println(curr.type + "   |   " + curr.data);
         }
     }
-
 }
-
-//Yes debug make me :)
