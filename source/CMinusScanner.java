@@ -2,6 +2,7 @@ package source;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+
 import java.io.FileNotFoundException;
 
 public class CMinusScanner implements Scanner {
@@ -132,27 +133,27 @@ public class CMinusScanner implements Scanner {
                     }
                     break;
                 case IN_ID:
-                    if (isSpace(currChar) || isPunctuation(currChar) || EOF) {
+                    if (isLetter(currChar)) {
+                        currData += currChar;
+                    } else if (isDigit(currChar)) {
+                        returnToken = new Token(Token.TokenType.ERR, currData + currChar);
+                        currState = DFAState.DONE;
+                    } else {
                         returnToken = new Token(Token.TokenType.ID, currData);
                         currState = DFAState.DONE;
                         unGetNextChar(inFile);
-                    } else if (!isLetter(currChar)) {
-                        returnToken = new Token(Token.TokenType.ERR, currData + currChar);
-                        currState = DFAState.DONE;
-                    } else {
-                        currData += currChar;
                     }
                     break;
                 case IN_NUM:
-                    if (isSpace(currChar) || isPunctuation(currChar) || EOF) {
-                        returnToken = new Token(Token.TokenType.NUM, currData);
-                        currState = DFAState.DONE;
-                        unGetNextChar(inFile);
-                    } else if (!isDigit(currChar)) {
+                    if (isDigit(currChar)) {
+                        currData += currChar;
+                    } else if (isLetter(currChar)) {
                         returnToken = new Token(Token.TokenType.ERR, currData + currChar);
                         currState = DFAState.DONE;
                     } else {
-                        currData += currChar;
+                        returnToken = new Token(Token.TokenType.NUM, currData);
+                        currState = DFAState.DONE;
+                        unGetNextChar(inFile);
                     }
                     break;
                 case IN_DIV:
@@ -267,12 +268,6 @@ public class CMinusScanner implements Scanner {
         return c == ' ' || c == '\n' || c == '\r';
     }
 
-    private static boolean isPunctuation(char c) {
-        return c == ';' || c == ',' || c == '(' || c == ')' || c == '[' || c == ']' || c == '{' 
-            || c == '}' || c == '+' || c == '-' || c == '/' || c == '*' || c == '=' || c == '!' 
-            || c == '>' || c == '<'; 
-    }
-
     private static int getNextChar(BufferedReader inFile) throws IOException {
         inFile.mark(1);
         return inFile.read();
@@ -283,7 +278,7 @@ public class CMinusScanner implements Scanner {
     }
 
     public static void main(String[] args) throws Exception {
-        CMinusScanner scanner = new CMinusScanner("code/test_all.cm");
+        Scanner scanner = new CMinusScanner("code/test_all.cm");
         Token curr = new Token(null);
         while (curr.type != Token.TokenType.EOF) {
             curr = scanner.getNextToken();
